@@ -262,7 +262,26 @@ class MarkdownTreeBuilder:
     def build_tree(self, node_list):
         """
         Convert a flat ordered section list into nested PageIndex nodes.
+        For each node in the flat list:
+            Create tree node — Build a node dictionary with title, auto-incremented ID, text, line number, and an empty children list
+            Pop ancestors — Remove nodes from the stack whose heading level is ≥ the current node's level. This happens when:
+                A sibling appears (same level)
+                A node at a higher level appears (fewer # symbols, e.g., ## after ###)
+            Add to parent or root — If the stack is empty, this is a root node. Otherwise, append it to the last node in the stack (its parent)
+            Push current node — Add the new node to the stack for potential children
 
+        for Markdown Structure like
+            # Section 1 (level 1)
+            ## Subsection 1.1 (level 2)
+            ## Subsection 1.2 (level 2)
+            # Section 2 (level 1)
+            ### Deep (level 3)
+        Algorithm builds
+            Section 1
+            ├─ Subsection 1.1
+            └─ Subsection 1.2
+            Section 2
+            └─ Deep
         Args:
             node_list: Flat Markdown section records with `title`, `line_num`,
             `level`, and `text`.
