@@ -449,7 +449,7 @@ class MarkdownDocumentIndexer:
             builder: Optional custom tree builder.
             summary_service: Optional custom summary service.
         """
-        self.model = model
+        self.model = model or "gemini-2.5-flash"
         self.parser = parser or MarkdownHeaderParser()
         self.extractor = extractor or MarkdownContentExtractor()
         self.thinner = thinner or MarkdownTreeThinner(model=model)
@@ -469,6 +469,127 @@ class MarkdownDocumentIndexer:
     ):
         """
         Index a Markdown file into the PageIndex JSON-compatible structure.
+
+        ## Index Function - If-Then Blocks Explained
+
+        ### 1. **Thinning Block** (lines 500-503)
+        ```python
+        if if_thinning:
+            nodes_with_content = self.thinner.add_token_counts(nodes_with_content)
+            print("Thinning nodes...")
+            nodes_with_content = self.thinner.thin_for_index(nodes_with_content, min_token_threshold)
+        ```
+        **What happens:** When `if_thinning=True`, this merges small sections together to optimize document structure:
+        - Counts tokens in each node's subtree (all descendants)
+        - Removes nodes smaller than `min_token_threshold` and merges their text into parents
+        - Reduces granularity for very detailed Markdown documents
+
+        ---
+
+        ### 2. **Node ID Rewriting Block** (lines 508-509)
+        ```python
+        if if_add_node_id == "yes":
+            write_node_id(tree_structure)
+        ```
+        **What happens:** Rewrites node IDs to be stable and sequential (0001, 0002, etc.) across the entire tree. Without this, IDs would reflect insertion order only.
+
+        ---
+
+        ### 3. **Main Summary Decision** (lines 513-540)
+        ```python
+        if if_add_node_summary == "yes":
+            # BRANCH A: Add summaries
+        else:
+            # BRANCH B: No summaries
+        ```
+
+        This is the primary branching logic that determines the entire output structure.
+
+        ---
+
+        ## **BRANCH A: `if_add_node_summary == "yes"` (lines 513-540)**
+
+        **Step 1: Format for summaries** (lines 514-517)
+        ```python
+        tree_structure = format_structure(
+            tree_structure,
+            order=["title", "node_id", "line_num", "summary", "prefix_summary", "text", "nodes"],
+        )
+        ```
+        Reorders node fields to include `summary` and `prefix_summary` placeholders.
+
+        **Step 2: Generate summaries** (lines 519-523)
+        ```python
+        tree_structure = await self.summary_service.generate_summaries_for_structure(
+            tree_structure,
+            summary_token_threshold=summary_token_threshold,
+        )
+        ```
+        Populates:
+        - `summary` for **leaf nodes** (nodes with no children) — either raw text if small, or AI-generated summary
+        - `prefix_summary` for **internal nodes** (nodes with children) — summarizes the section header area
+
+        **Step 3: Nested conditional** (lines 525-529)
+        ```python
+        if if_add_node_text == "no":
+            tree_structure = format_structure(
+                tree_structure,
+                order=["title", "node_id", "line_num", "summary", "prefix_summary", "nodes"],
+            )
+        ```
+        **If text NOT included:** Removes the `"text"` field from output to reduce file size.
+
+        **Step 4: Final nested conditional** (lines 531-540)
+        ```python
+        if if_add_doc_description == "yes":
+            print("Generating document description...")
+            clean_structure = create_clean_structure_for_description(tree_structure)
+            doc_description = generate_doc_description(clean_structure, model=self.model)
+            return {
+                "doc_name": path.stem,
+                "doc_description": doc_description,
+                "line_count": line_count,
+                "structure": tree_structure,
+            }
+        ```
+        **If document description requested:**
+        - Generates a one-sentence AI summary of the entire document
+        - Returns early with the description included in the output
+        - If `"no"`, continues to the final return statement (lines 553-557)
+
+        ---
+
+        ## **BRANCH B: `else` (lines 541-551)** — No summaries
+
+        When `if_add_node_summary != "yes"`, the function skips all summary generation but still respects `if_add_node_text`:
+
+        ```python
+        if if_add_node_text == "yes":
+            tree_structure = format_structure(
+                tree_structure,
+                order=["title", "node_id", "line_num", "summary", "prefix_summary", "text", "nodes"],
+            )
+        else:
+            tree_structure = format_structure(
+                tree_structure,
+                order=["title", "node_id", "line_num", "summary", "prefix_summary", "nodes"],
+            )
+        ```
+
+        The fields `summary` and `prefix_summary` remain in the field order even though they're not populated — they'll just be absent from the actual nodes.
+
+        ---
+
+        ## **Decision Tree Summary**
+
+        | `if_add_node_summary` | `if_add_node_text` | `if_add_doc_description` | Output Contains |
+        |---|---|---|---|
+        | `"yes"` | `"yes"` | `"yes"` | title, node_id, line_num, summary, prefix_summary, text, nodes, **doc_description** |
+        | `"yes"` | `"yes"` | `"no"` | title, node_id, line_num, summary, prefix_summary, text, nodes |
+        | `"yes"` | `"no"` | `"yes"` | title, node_id, line_num, summary, prefix_summary, nodes, **doc_description** |
+        | `"yes"` | `"no"` | `"no"` | title, node_id, line_num, summary, prefix_summary, nodes |
+        | `"no"` | `"yes"` | *(ignored)* | title, node_id, line_num, summary, prefix_summary, text, nodes |
+        | `"no"` | `"no"` | *(ignored)* | title, node_id, line_num, summary, prefix_summary, nodes |
 
         Args:
             md_path: Path to the Markdown file.
