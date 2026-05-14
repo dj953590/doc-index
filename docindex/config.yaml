@@ -1,7 +1,6 @@
 model: "gemini-2.5-flash"
 retrieve_model: "gemini-2.5-flash"
-google_cloud_project:
-google_cloud_location:
+gemini_api_key:
 if_thinning: false
 min_token_threshold: 5000
 summary_token_threshold: 200

@@ -16,15 +16,34 @@ except ImportError:
     pass
 
 _genai_client = None
+_gemini_api_key = None
+
+
+def set_gemini_api_key(api_key):
+    """
+    Set the Gemini API key for client initialization.
+
+    When set, this key is used as the preferred authentication method for the
+    Gen AI client. The client cache is cleared so the new key will be used on
+    the next client creation.
+
+    Args:
+        api_key: Gemini API key string, or `None` to clear the key.
+    """
+    global _genai_client, _gemini_api_key
+    _gemini_api_key = api_key
+    _genai_client = None  # Clear cache to force re-initialization with new key
 
 
 def _get_genai_client():
     """
     Lazily create and cache the Google Gen AI client.
 
-    The client is shared by token counting and Gemini generation. When
-    `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION` are set, it connects to
-    Vertex AI; otherwise it falls back to the standard Gen AI client behavior.
+    The client is shared by token counting and Gemini generation. It attempts
+    authentication in this order:
+    1. If `gemini_api_key` was set via `set_gemini_api_key()`, use it directly
+    2. If `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION` are set, connect to Vertex AI
+    3. Otherwise, use the standard Gen AI client with default credentials
 
     Returns:
         A cached `google.genai.Client` instance.
@@ -39,12 +58,16 @@ def _get_genai_client():
                 "Install project dependencies before indexing with LLM-backed options."
             ) from exc
 
-        project = os.getenv("GOOGLE_CLOUD_PROJECT")
-        location = os.getenv("GOOGLE_CLOUD_LOCATION")
-        if project and location:
-            _genai_client = genai.Client(vertexai=True, project=project, location=location)
+        # Prefer explicitly set API key
+        if _gemini_api_key:
+            _genai_client = genai.Client(api_key=_gemini_api_key)
         else:
-            _genai_client = genai.Client()
+            project = os.getenv("GOOGLE_CLOUD_PROJECT")
+            location = os.getenv("GOOGLE_CLOUD_LOCATION")
+            if project and location:
+                _genai_client = genai.Client(vertexai=True, project=project, location=location)
+            else:
+                _genai_client = genai.Client()
     return _genai_client
 
 

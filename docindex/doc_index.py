@@ -491,7 +491,8 @@ class MarkdownDocumentIndexer:
         if if_add_node_id == "yes":
             write_node_id(tree_structure)
         ```
-        **What happens:** Rewrites node IDs to be stable and sequential (0001, 0002, etc.) across the entire tree. Without this, IDs would reflect insertion order only.
+        **What happens:** Rewrites node IDs to be stable and sequential (0001, 0002, etc.) across the entire tree.
+        Without this, IDs would reflect insertion order only.
 
         ---
 

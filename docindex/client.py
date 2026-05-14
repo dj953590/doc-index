@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .doc_index import md_to_tree
 from .retrieve import get_document, get_document_structure, get_page_content
-from .utils import ConfigLoader
+from .utils import ConfigLoader, set_gemini_api_key
 
 META_INDEX = "_meta.json"
 MARKDOWN_EXTENSIONS = {".md", ".markdown"}
@@ -287,6 +287,7 @@ class PageIndexClient:
         """
         if api_key:
             os.environ["GOOGLE_API_KEY"] = api_key
+            set_gemini_api_key(api_key)
         if vertex_project and not vertex_location:
             vertex_location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
         if vertex_project:

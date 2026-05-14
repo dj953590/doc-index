@@ -4,7 +4,7 @@ import json
 import os
 
 from docindex.doc_index import md_to_tree
-from docindex.utils import ConfigLoader
+from docindex.utils import ConfigLoader, set_gemini_api_key
 
 
 def parse_args():
@@ -18,6 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Process a Markdown document and generate a PageIndex structure")
     parser.add_argument("--md_path", type=str, required=True, help="Path to the Markdown file")
     parser.add_argument("--model", type=str, default=None, help="Model to use (overrides config.yaml)")
+    parser.add_argument("--gemini-api-key", type=str, default=None, help="Gemini API key (overrides config.yaml)")
     parser.add_argument("--google-cloud-project", type=str, default=None, help="Vertex AI Google Cloud project")
     parser.add_argument("--google-cloud-location", type=str, default=None, help="Vertex AI Google Cloud location")
     parser.add_argument("--if-add-node-id", type=str, default=None, help="Whether to add node id to each node")
@@ -42,6 +43,7 @@ def load_options(args):
     """
     user_opt = {
         "model": args.model,
+        "gemini_api_key": args.gemini_api_key,
         "google_cloud_project": args.google_cloud_project,
         "google_cloud_location": args.google_cloud_location,
         "if_add_node_summary": args.if_add_node_summary,
@@ -70,6 +72,11 @@ async def main():
         raise ValueError(f"Markdown file not found: {args.md_path}")
 
     opt = load_options(args)
+
+    # Set Gemini API key if provided
+    if opt.gemini_api_key:
+        set_gemini_api_key(opt.gemini_api_key)
+
     if opt.google_cloud_project:
         os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
         os.environ["GOOGLE_CLOUD_PROJECT"] = opt.google_cloud_project
