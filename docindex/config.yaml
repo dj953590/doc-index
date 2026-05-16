@@ -1,6 +1,6 @@
 model: "gemini-2.5-flash"
 retrieve_model: "gemini-2.5-flash"
-gemini_api_key: "AIzaSyDRe4jfUtykPhHf_A6uT9z-5ErZBlN0VxE"
+gemini_api_key:
 if_thinning: false
 min_token_threshold: 5000
 summary_token_threshold: 200
