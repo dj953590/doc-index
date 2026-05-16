@@ -147,7 +147,8 @@ async def interactive_mode():
 
     # Get document path from user
     print("\nAvailable documents:")
-    docs_dir = Path("examples/documents")
+    docs_dir = (resolve_path("examples/documents"))
+
     docs = list(docs_dir.glob("*.pdf")) + list(docs_dir.glob("*.md"))
 
     for i, doc in enumerate(docs[:10], 1):  # Show first 10
@@ -192,7 +193,7 @@ async def interactive_mode():
 
 if __name__ == "__main__":
     # Run the main example
-    asyncio.run(main())
+    asyncio.run(interactive_mode())
 
     # Uncomment to run interactive mode instead:
     # asyncio.run(interactive_mode())

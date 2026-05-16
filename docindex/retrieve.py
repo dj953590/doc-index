@@ -76,6 +76,8 @@ class MarkdownContentRetriever:
         if not page_nums:
             return []
 
+        print(f"Debug: Retrieving content for lines {page_nums} in document '{doc_info.get('doc_name', '')}'")
+
         min_line, max_line = min(page_nums), max(page_nums)
         results = []
         seen = set()
@@ -97,6 +99,9 @@ class MarkdownContentRetriever:
 
         _traverse(doc_info.get("structure", []))
         results.sort(key=lambda item: item["page"])
+
+        #print th results for the debugging purpose
+        print(f"Debug: Retrieved content for lines {page_nums}: {results}")
         return results
 
 

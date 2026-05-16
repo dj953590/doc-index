@@ -30,8 +30,8 @@ async def example_pdf_to_markdown_to_index():
 
     # Step 1: Convert PDF to Markdown
 
-    pdf_path = resolve_path("examples/documents/q1-fy25-earnings.pdf")
-    markdown_output = resolve_path("examples/documents/q1-fy25-earnings.md")
+    pdf_path = resolve_path("examples/documents/2023-annual-report.pdf")
+    markdown_output = resolve_path("examples/documents/2023-annual-report.md")
 
     print(f"\n[STEP 1] Converting PDF to Markdown")
     print(f"  Input:  {pdf_path}")
