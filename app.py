@@ -17,17 +17,6 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Process a Markdown document and generate a PageIndex structure")
     parser.add_argument("--md_path", type=str, required=True, help="Path to the Markdown file")
-    parser.add_argument("--model", type=str, default=None, help="Model to use (overrides config.yaml)")
-    parser.add_argument("--gemini-api-key", type=str, default=None, help="Gemini API key (overrides config.yaml)")
-    parser.add_argument("--google-cloud-project", type=str, default=None, help="Vertex AI Google Cloud project")
-    parser.add_argument("--google-cloud-location", type=str, default=None, help="Vertex AI Google Cloud location")
-    parser.add_argument("--if-add-node-id", type=str, default=None, help="Whether to add node id to each node")
-    parser.add_argument("--if-add-node-summary", type=str, default=None, help="Whether to add summary to each node")
-    parser.add_argument("--if-add-doc-description", type=str, default=None, help="Whether to add doc description")
-    parser.add_argument("--if-add-node-text", type=str, default=None, help="Whether to add text to each node")
-    parser.add_argument("--if-thinning", type=str, default=None, help="Whether to apply tree thinning")
-    parser.add_argument("--thinning-threshold", type=int, default=None, help="Minimum token threshold for thinning")
-    parser.add_argument("--summary-token-threshold", type=int, default=None, help="Token threshold for summaries")
     return parser.parse_args()
 
 
@@ -41,20 +30,8 @@ def load_options(args):
     Returns:
         A `SimpleNamespace` config object accepted by `md_to_tree`.
     """
-    user_opt = {
-        "model": args.model,
-        "gemini_api_key": args.gemini_api_key,
-        "google_cloud_project": args.google_cloud_project,
-        "google_cloud_location": args.google_cloud_location,
-        "if_add_node_summary": args.if_add_node_summary,
-        "if_add_doc_description": args.if_add_doc_description,
-        "if_add_node_text": args.if_add_node_text,
-        "if_add_node_id": args.if_add_node_id,
-        "if_thinning": args.if_thinning.lower() == "yes" if args.if_thinning else None,
-        "min_token_threshold": args.thinning_threshold,
-        "summary_token_threshold": args.summary_token_threshold,
-    }
-    return ConfigLoader().load({key: value for key, value in user_opt.items() if value is not None})
+
+    return ConfigLoader().load()
 
 
 async def main():

@@ -913,3 +913,9 @@ def print_wrapped(text, width=100):
     for line in text.splitlines():
         print(textwrap.fill(line, width=width))
 
+
+def resolve_path(pdf_path: str) -> Path:
+
+    script_dir = Path(__file__).parent.parent  # Project root (up from examples/)
+    alt_path = script_dir / pdf_path
+    return alt_path
